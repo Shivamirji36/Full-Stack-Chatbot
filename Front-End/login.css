@@ -23,10 +23,13 @@ form {
     flex-direction: column;
     justify-content: center;
     background-color: #ffffff;
-    width: 420px;
+    width: 350px;
     padding: 45px;
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    border: 15px white;
+    margin: 170px;
+    background-color: #ffffff;
 }
 
 .login-btn {
@@ -53,16 +56,6 @@ label {
 input {
     padding: 3%;
     border-radius: 4px;
-}
-
-.login-box {
-    display: flex;
-    justify-content: center;
-    width: 300px;
-    border: 15px white;
-    padding: 70px;
-    margin: 170px;
-    background-color: #ffffff;
 }
 
 .line-separator {
