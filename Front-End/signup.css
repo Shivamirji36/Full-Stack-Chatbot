@@ -80,6 +80,7 @@ input:focus {
 
 a {
     text-decoration: none;
+    font-weight: 600;
 }
 
 @media (max-width: 768px) {
