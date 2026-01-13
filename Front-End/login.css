@@ -1,8 +1,8 @@
 h1 {
     text-align: center;
-    font-weight: bolder;
-    font-size: 50px;
-    margin: 10px;
+    font-size: 48px;
+    font-weight: 600;
+    margin-bottom: 20px;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -34,29 +34,33 @@ form {
 }
 
 .login-btn {
+    margin-top: 20px;
+    padding: 12px;
     background: linear-gradient(180deg, #2a2a2a 0%, #1f1f1f 100%);
     color: white;
-    padding: 2%;
-    font-size: 20px;
-    margin-top: 15px;
-    border: 0;
-    border-color: black;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    border-radius: 4px;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.login-btn:hover {
+    opacity: 0.9;
 }
 
 label {
-    font-family: sans-serif;
-    font-weight: bolder;
-    font-size: 15px;
-    margin: 10px 0px;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 10px 0 6px;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 input {
-    padding: 3%;
-    border-radius: 4px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d1d1;
+    font-size: 14px;
 }
 
 .line-separator {
@@ -83,6 +87,10 @@ input {
 .register-para {
     text-align: center;
     margin-top: 0px;
+}
+
+a {
+    text-decoration: none;
 }
 
 @media (max-width: 768px) {
