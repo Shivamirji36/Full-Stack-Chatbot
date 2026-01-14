@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="chat.css">
+</head>
+
+<body class="chat-page">
+
+    <div class="skeleton">
+        <header class="chat-header">
+            <button class="back-btn" onclick="goBack()">← Back to Dashboard</button>
+            <h3 id="projectName">Customer Support Bot</h3>
+        </header>
+
+        <main class="chat-body" id="chatBody">
+            <div class="message bot">
+                Hello! How can I help you today?
+            </div>
+
+            <div class="message user">
+                I’m having trouble logging into my account.
+            </div>
+        </main>
+
+        <footer class="chat-input">
+            <input type="text" id="messageInput" placeholder="Type a message..." />
+            <button onclick="sendMessage()">Send</button>
+        </footer>
+    </div>
+
+    <script src="chat.js"></script>
+</body>
+
+</html>
