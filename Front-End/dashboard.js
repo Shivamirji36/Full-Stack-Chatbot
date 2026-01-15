@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8080/api";
+const API_BASE = "https://full-stack-chatbot-3.onrender.com";
 
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");

@@ -9,7 +9,7 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
     const name = `${firstName} ${lastName}`;
 
     try {
-        const response = await fetch("http://localhost:8080/api/auth/register", {
+        const response = await fetch("https://full-stack-chatbot-3.onrender.com", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
