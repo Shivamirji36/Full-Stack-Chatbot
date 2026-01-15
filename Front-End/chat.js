@@ -36,6 +36,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("projectName").textContent = project.name;
 
+    // ✅ Wire Send button
+    const sendBtn = document.getElementById("sendBtn");
+    if (sendBtn) {
+        sendBtn.addEventListener("click", sendMessage);
+    } else {
+        console.error("Send button not found");
+    }
+
+    // ✅ Enter key sends message (inside input only)
+    const input = document.getElementById("messageInput");
+    input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
     loadChatHistory(project.id);
 });
 
@@ -48,7 +65,7 @@ async function loadChatHistory(projectId) {
 
     try {
         const res = await fetch(
-            `${API_BASE}/api/chat/${projectId}/history`, // ✅ FIX
+            `${API_BASE}/api/chat/${projectId}/history`,
             {
                 headers: {
                     "Authorization": "Bearer " + localStorage.getItem("token"),
@@ -85,4 +102,62 @@ async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
 
-    const project = JSON.parse(localStorage.getItem("cur
+    const project = JSON.parse(localStorage.getItem("currentProject"));
+
+    renderMessage("user", text);
+    input.value = "";
+
+    try {
+        const res = await fetch(
+            `${API_BASE}/api/chat/${project.id}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + localStorage.getItem("token")
+                },
+                body: JSON.stringify({ message: text })
+            }
+        );
+
+        if (!res.ok) {
+            console.error("Chat send failed:", res.status);
+            renderMessage("assistant", "⚠️ Message failed.");
+            return;
+        }
+
+        const data = await res.json();
+        renderMessage("assistant", data.response);
+
+    } catch (err) {
+        console.error("Chat error:", err);
+        renderMessage("assistant", "⚠️ AI service unavailable.");
+    }
+}
+
+/* ===========================
+   UI HELPERS
+=========================== */
+function renderMessage(role, text) {
+    const chatBody = document.getElementById("chatBody");
+
+    const div = document.createElement("div");
+    div.className = role === "user" ? "message user" : "message bot";
+    div.textContent = text;
+
+    chatBody.appendChild(div);
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
+
+function logout() {
+    localStorage.clear();
+    redirectToLogin();
+}
+
+function redirectToLogin() {
+    window.location.href = "login.html";
+}
+
+function redirectToDashboard() {
+    window.location.href = "dashboard.html";
+}
