@@ -4,6 +4,7 @@ import com.chatbot.dto.AuthDTOs.*;
 import com.chatbot.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -15,23 +16,31 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // ✅ Constructor injection (recommended)
+    // ✅ Constructor injection
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+    // ================= REGISTER =================
 
-        System.out.println("🔥 REGISTER endpoint HIT");
+    @PostMapping("/register")
+    public ResponseEntity<?> register(
+            @Valid @RequestBody RegisterRequest request,
+            BindingResult bindingResult
+    ) {
+
+        // 🔍 Handle validation errors
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(error ->
+                    errors.put(error.getField(), error.getDefaultMessage())
+            );
+            return ResponseEntity.badRequest().body(errors);
+        }
 
         try {
             AuthResponse response = authService.register(request);
-
-            System.out.println("🔥 REGISTER endpoint COMPLETED");
-
             return ResponseEntity.ok(response);
-
         } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
@@ -39,14 +48,29 @@ public class AuthController {
         }
     }
 
+    // ================= LOGIN =================
+
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(
+            @Valid @RequestBody LoginRequest request,
+            BindingResult bindingResult
+    ) {
+
+        // 🔍 Handle validation errors explicitly
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(error ->
+                    errors.put(error.getField(), error.getDefaultMessage())
+            );
+            return ResponseEntity.badRequest().body(errors);
+        }
+
         try {
             AuthResponse response = authService.login(request);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
-            error.put("error", "Invalid credentials");
+            error.put("error", "Invalid email or password");
             return ResponseEntity.badRequest().body(error);
         }
     }
