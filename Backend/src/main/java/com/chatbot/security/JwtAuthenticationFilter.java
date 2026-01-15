@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,7 +21,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailsService userDetailsService;
 
-    // ✅ CONSTRUCTOR INJECTION (MANDATORY)
     public JwtAuthenticationFilter(
             JwtUtil jwtUtil,
             CustomUserDetailsService userDetailsService
@@ -36,6 +36,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        String path = request.getServletPath();
+
+        // 🔥 CRITICAL FIX: skip auth endpoints & preflight
+        if (
+                path.startsWith("/api/auth") ||
+                        HttpMethod.OPTIONS.matches(request.getMethod())
+        ) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         final String authHeader = request.getHeader("Authorization");
 
         String jwt = null;
@@ -45,7 +56,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             jwt = authHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwt);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                // invalid token → continue without auth
+            }
         }
 
         if (username != null &&
