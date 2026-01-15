@@ -28,22 +28,30 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // ✅ Uses CorsConfig.java automatically
+                // ✅ Enable CORS (uses CorsConfig)
                 .cors(cors -> {})
 
-                // ✅ JWT = stateless
+                // ✅ Disable CSRF (JWT-based auth)
                 .csrf(csrf -> csrf.disable())
 
+                // ✅ Stateless session
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
+                // ✅ Authorization rules
                 .authorizeHttpRequests(auth -> auth
+                        // 🔥 VERY IMPORTANT: allow preflight
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // Public auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // Everything else secured
                         .anyRequest().authenticated()
                 );
 
+        // ✅ JWT filter
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
