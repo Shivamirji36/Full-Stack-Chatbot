@@ -158,6 +158,6 @@ function redirectToLogin() {
     window.location.href = "login.html";
 }
 
-function redirectToDashboard() {
+function goBack() {
     window.location.href = "dashboard.html";
 }
