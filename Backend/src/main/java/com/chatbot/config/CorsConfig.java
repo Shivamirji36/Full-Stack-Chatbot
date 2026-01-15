@@ -17,7 +17,7 @@ public class CorsConfig {
                         .allowedOrigins(
                                 "http://localhost:3000",
                                 "https://full-stack-chatbot-dun.vercel.app",
-                                "https://full-stack-chatbot-git-main-shivase-projects-b72991c5.vercel.app"
+                                "http://full-stack-chatbot-git-main-shivas-projects-b72991c5.vercel.app/"
                         )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
