@@ -36,6 +36,18 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+
+        System.out.println("🔥 REGISTER endpoint HIT");
+
+        AuthResponse response = authService.register(request);
+
+        System.out.println("🔥 REGISTER endpoint COMPLETED");
+
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
