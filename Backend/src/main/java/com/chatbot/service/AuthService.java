@@ -14,7 +14,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    // ✅ Constructor injection (clean & safe)
     public AuthService(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
@@ -29,14 +28,16 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        String email = request.getEmail().toLowerCase().trim();
+
+        if (userRepository.existsByEmail(email)) {
             throw new RuntimeException("Email already exists");
         }
 
         User user = new User(
                 request.getName(),
-                request.getEmail(),
-                passwordEncoder.encode(request.getPassword()) // ✅ bcrypt
+                email,
+                passwordEncoder.encode(request.getPassword())
         );
 
         user = userRepository.save(user);
@@ -55,10 +56,11 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
 
-        User user = userRepository.findByEmail(request.getEmail())
+        String email = request.getEmail().toLowerCase().trim();
+
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Invalid email or password"));
 
-        // 🔥 THIS WAS MISSING LOGIC
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword()
