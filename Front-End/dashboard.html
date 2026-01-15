@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <title>Dashboard</title>
@@ -11,7 +11,7 @@
 
     <header class="dashboard-header">
         <span class="app-title">Chatbot Platform</span>
-        <button class="logout-btn">Logout</button>
+        <button class="logout-btn" onclick="logout()">Logout</button>
     </header>
 
     <div class="dashboard-container">
@@ -25,19 +25,18 @@
             <label>System Prompt</label>
             <textarea id="systemPrompt" placeholder="System Prompt (e.g. You are a helpful assistant)"></textarea>
 
-            <button id="createProjectBtn">Create Project</button>
+            <button id="createProjectBtn" onclick="createProject()">
+                Create Project
+            </button>
         </section>
 
         <section class="card">
             <h3>Your Projects</h3>
-
-            <section class="card">
-                <h3>Your Projects</h3>
-                <div id="projectsList"></div>
-            </section>
+            <div id="projectsContainer"></div>
         </section>
 
     </div>
+
     <script src="dashboard.js"></script>
 </body>
 

@@ -1,9 +1,13 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     const form = document.getElementById("loginForm");
+    const errorLabel = document.getElementById("loginError");
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
+
+        // Clear previous error
+        errorLabel.textContent = "";
 
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
@@ -24,18 +28,30 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (!response.ok) {
-                throw new Error(data.error || "Login failed");
+                // ❌ Invalid credentials
+                errorLabel.textContent = "Invalid email/password";
+                return;
             }
 
-            // ✅ Store JWT
+            // ✅ Store JWT and user info
             localStorage.setItem("token", data.token);
             localStorage.setItem("userId", data.userId);
             localStorage.setItem("name", data.name);
 
+            // ✅ Redirect to dashboard
             window.location.href = "dashboard.html";
 
         } catch (error) {
-            alert(error.message);
+            console.error(error);
+            errorLabel.textContent = "Something went wrong. Please try again.";
         }
+    });
+
+    // Optional: clear error while typing
+    document.getElementById("email").addEventListener("input", () => {
+        errorLabel.textContent = "";
+    });
+    document.getElementById("password").addEventListener("input", () => {
+        errorLabel.textContent = "";
     });
 });

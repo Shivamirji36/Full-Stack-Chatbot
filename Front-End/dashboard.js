@@ -1,128 +1,114 @@
+const API_BASE = "http://localhost:8080/api";
 
-const token = localStorage.getItem("token");
+document.addEventListener("DOMContentLoaded", () => {
+    const token = localStorage.getItem("token");
 
-if (!token) {
-    window.location.href = "login.html";
-}
+    if (!token) {
+        window.location.href = "login.html";
+        return;
+    }
 
-const projectsList = document.getElementById("projectsList");
-const createBtn = document.getElementById("createProjectBtn");
-const projectNameInput = document.getElementById("projectName");
-const systemPromptInput = document.getElementById("systemPrompt");
-const logoutBtn = document.querySelector(".logout-btn");
+    loadProjects();
+});
 
-document.addEventListener("DOMContentLoaded", loadProjects);
-
+/* ===========================
+   LOAD PROJECTS
+=========================== */
 async function loadProjects() {
+    const container = document.getElementById("projectsContainer");
+    container.innerHTML = "<p>Loading projects...</p>";
+
     try {
-        const response = await fetch("http://localhost:8080/api/projects", {
-            method: "GET",
+        const res = await fetch(`${API_BASE}/projects`, {
             headers: {
-                "Authorization": "Bearer " + token
+                "Authorization": "Bearer " + localStorage.getItem("token")
             }
         });
 
-        if (response.status === 401) {
+        if (res.status === 401 || res.status === 403) {
             logout();
             return;
         }
 
-        const projects = await response.json();
-        renderProjects(projects);
+        const projects = await res.json();
 
-    } catch (error) {
-        alert("Failed to load projects");
-        console.error(error);
-    }
-}
+        container.innerHTML = "";
 
-function renderProjects(projects) {
-    projectsList.innerHTML = "";
+        if (projects.length === 0) {
+            container.innerHTML = "<p>No projects yet</p>";
+            return;
+        }
 
-    if (!projects || projects.length === 0) {
-        projectsList.innerHTML = "<p>No projects yet.</p>";
-        return;
-    }
+        projects.forEach(project => {
+            const card = document.createElement("div");
+            card.className = "project-card";
+            card.innerHTML = `
+                <h4>${project.name}</h4>
+                <p>${project.model}</p>
+            `;
 
-    projects.forEach(project => {
-        const div = document.createElement("div");
-        div.className = "project-item";
-
-        div.innerHTML = `
-            <span>${project.name}</span>
-            <span>→</span>
-        `;
-
-        div.addEventListener("click", () => {
-            localStorage.setItem("currentProjectId", project.id);
-            window.location.href = "chat.html";
+            card.addEventListener("click", () => openProject(project));
+            container.appendChild(card);
         });
 
-        projectsList.appendChild(div);
-    });
+    } catch (err) {
+        console.error("Failed to load projects", err);
+        container.innerHTML = "<p>Error loading projects</p>";
+    }
 }
 
-createBtn.addEventListener("click", async () => {
-    const name = projectNameInput.value.trim();
-    const systemPrompt = systemPromptInput.value.trim();
+/* ===========================
+   OPEN PROJECT
+=========================== */
+function openProject(project) {
+    console.log("Selected project:", project);
+
+    localStorage.setItem("currentProject", JSON.stringify(project));
+    window.location.href = "chat.html";
+}
+
+/* ===========================
+   CREATE PROJECT
+=========================== */
+async function createProject() {
+    const nameInput = document.getElementById("projectName");
+    const promptInput = document.getElementById("systemPrompt");
+
+    const name = nameInput.value.trim();
+    const systemPrompt = promptInput.value.trim();
 
     if (!name) {
-        alert("Project name is required");
+        alert("Project name required");
         return;
     }
 
     try {
-        const response = await fetch("http://localhost:8080/api/projects", {
+        const res = await fetch(`${API_BASE}/projects`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + token
+                "Authorization": "Bearer " + localStorage.getItem("token")
             },
             body: JSON.stringify({
                 name,
-                systemPrompt,
-                model: "gpt-4o"
+                systemPrompt
             })
         });
 
-        if (response.status === 401) {
+        if (res.status === 401 || res.status === 403) {
             logout();
             return;
         }
 
-        const project = await response.json();
+        nameInput.value = "";
+        promptInput.value = "";
 
-        // Clear inputs
-        projectNameInput.value = "";
-        systemPromptInput.value = "";
+        loadProjects(); // 🔥 refresh list
 
-        // Add new project to list immediately
-        appendProject(project);
-
-    } catch (error) {
-        alert("Failed to create project");
-        console.error(error);
+    } catch (err) {
+        console.error("Create project failed", err);
     }
-});
-
-function appendProject(project) {
-    const div = document.createElement("div");
-    div.className = "project-item";
-
-    div.innerHTML = `
-        <span>${project.name}</span>
-        <span>→</span>
-    `;
-
-    div.addEventListener("click", () => {
-        localStorage.setItem("currentProjectId", project.id);
-        window.location.href = "chat.html";
-    });
-
-    projectsList.appendChild(div);
 }
-
-logoutBtn.addEventListener("click", logout);
 
 function logout() {
     localStorage.clear();
