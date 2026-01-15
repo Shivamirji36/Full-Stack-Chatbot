@@ -1,3 +1,5 @@
+const API_BASE = "https://full-stack-chatbot-3.onrender.com";
+
 document.addEventListener("DOMContentLoaded", () => {
 
     const form = document.getElementById("loginForm");
@@ -13,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const password = document.getElementById("password").value;
 
         try {
-            const response = await fetch("https://full-stack-chatbot-3.onrender.com", {
+            const response = await fetch(`${API_BASE}/api/auth/signup`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

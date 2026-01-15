@@ -1,3 +1,5 @@
+const API_BASE = "https://full-stack-chatbot-3.onrender.com";
+
 document.getElementById("signupForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -9,7 +11,7 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
     const name = `${firstName} ${lastName}`;
 
     try {
-        const response = await fetch("https://full-stack-chatbot-3.onrender.com", {
+        const response = await fetch(`${API_BASE}/api/auth/signup`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
