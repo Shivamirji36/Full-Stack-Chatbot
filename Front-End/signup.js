@@ -19,17 +19,22 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
             body: JSON.stringify({ name, email, password })
         });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || "Registration failed");
+        // ✅ SAFELY READ RESPONSE
+        const text = await response.text();
+        let data = {};
+        if (text) {
+            data = JSON.parse(text);
         }
 
-        // Success → redirect to login
+        if (!response.ok) {
+            throw new Error(data.error || `Signup failed (${response.status})`);
+        }
+
         alert("Signup successful! Please login.");
         window.location.href = "login.html";
 
     } catch (error) {
-        alert(error.message);
+        console.error("Signup error:", error);
+        alert(error.message || "Something went wrong");
     }
 });
