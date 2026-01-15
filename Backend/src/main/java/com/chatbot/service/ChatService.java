@@ -4,123 +4,112 @@ import com.chatbot.dto.ChatDTOs.*;
 import com.chatbot.model.Message;
 import com.chatbot.model.Project;
 import com.chatbot.repository.MessageRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 @Service
 public class ChatService {
 
-    @Autowired
-    private ProjectService projectService;
-
-    public ProjectService getProjectService() {
-        return projectService;
-    }
-
-    public void setProjectService(ProjectService projectService) {
-        this.projectService = projectService;
-    }
-
-    public WebClient getWebClient() {
-        return webClient;
-    }
-
-    public MessageRepository getMessageRepository() {
-        return messageRepository;
-    }
-
-    public void setMessageRepository(MessageRepository messageRepository) {
-        this.messageRepository = messageRepository;
-    }
-
-    public String getOpenaiApiKey() {
-        return openaiApiKey;
-    }
-
-    public void setOpenaiApiKey(String openaiApiKey) {
-        this.openaiApiKey = openaiApiKey;
-    }
-
-    @Autowired
-    private MessageRepository messageRepository;
-
-    @Value("${openai.api.key}")
-    private String openaiApiKey;
-
+    private final ProjectService projectService;
+    private final MessageRepository messageRepository;
     private final WebClient webClient;
 
-    public ChatService() {
+    // ✅ Constructor injection (CORRECT WAY)
+    public ChatService(
+            ProjectService projectService,
+            MessageRepository messageRepository,
+            @Value("${openai.api.key}") String openaiApiKey
+    ) {
+        this.projectService = projectService;
+        this.messageRepository = messageRepository;
+
         this.webClient = WebClient.builder()
                 .baseUrl("https://api.openai.com/v1")
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + openaiApiKey)
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 
+    // ================= SEND MESSAGE =================
+
     public ChatResponse sendMessage(String projectId, ChatRequest request, String userId) {
+
         Project project = projectService.getProject(projectId, userId);
 
+        // Save user message
         Message userMessage = new Message(projectId, "user", request.getMessage());
         messageRepository.save(userMessage);
 
-        List<Message> history = messageRepository.findByProjectIdOrderByTimestampAsc(projectId);
+        List<Message> history =
+                messageRepository.findByProjectIdOrderByTimestampAsc(projectId);
 
         List<Map<String, String>> messages = new ArrayList<>();
 
+        // System prompt
         if (project.getSystemPrompt() != null && !project.getSystemPrompt().isEmpty()) {
-            Map<String, String> systemMessage = new HashMap<>();
-            systemMessage.put("role", "system");
-            systemMessage.put("content", project.getSystemPrompt());
-            messages.add(systemMessage);
+            messages.add(Map.of(
+                    "role", "system",
+                    "content", project.getSystemPrompt()
+            ));
         }
 
+        // Last 10 messages
         int startIndex = Math.max(0, history.size() - 10);
         for (int i = startIndex; i < history.size(); i++) {
             Message msg = history.get(i);
-            Map<String, String> message = new HashMap<>();
-            message.put("role", msg.getRole());
-            message.put("content", msg.getContent());
-            messages.add(message);
+            messages.add(Map.of(
+                    "role", msg.getRole(),
+                    "content", msg.getContent()
+            ));
         }
 
         String aiResponse = callOpenAI(messages, project.getModel());
 
-        Message assistantMessage = new Message(projectId, "assistant", aiResponse);
-        assistantMessage = messageRepository.save(assistantMessage);
+        Message assistantMessage =
+                messageRepository.save(new Message(projectId, "assistant", aiResponse));
 
         return new ChatResponse(aiResponse, assistantMessage.getId());
     }
 
-    private String callOpenAI(List<Map<String, String>> messages, String model) {
-        try {
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", model);
-            requestBody.put("messages", messages);
-            requestBody.put("max_tokens", 1000);
-            requestBody.put("temperature", 0.7);
+    // ================= OPENAI CALL =================
 
-            Map<String, Object> response = webClient.post()
+    private String callOpenAI(List<Map<String, String>> messages, String model) {
+
+        try {
+            Map<String, Object> requestBody = Map.of(
+                    "model", model,
+                    "messages", messages,
+                    "max_tokens", 1000,
+                    "temperature", 0.7
+            );
+
+            Map response = webClient.post()
                     .uri("/chat/completions")
-                    .header("Authorization", "Bearer " + openaiApiKey)
-                    .header("Content-Type", "application/json")
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
 
-            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-            Map<String, Object> choice = choices.get(0);
-            Map<String, String> message = (Map<String, String>) choice.get("message");
-            return message.get("content");
+            List<Map<String, Object>> choices =
+                    (List<Map<String, Object>>) response.get("choices");
+
+            Map<String, Object> message =
+                    (Map<String, Object>) choices.get(0).get("message");
+
+            return message.get("content").toString();
 
         } catch (Exception e) {
-            return "I apologize, but I'm having trouble connecting to the AI service right now. Please try again later.";
+            e.printStackTrace();
+            return "⚠️ AI service is currently unavailable. Please try again later.";
         }
     }
+
+    // ================= HISTORY =================
 
     public List<Message> getChatHistory(String projectId, String userId) {
         projectService.getProject(projectId, userId);
