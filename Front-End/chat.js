@@ -1,16 +1,14 @@
 const API_BASE = "https://full-stack-chatbot-3.onrender.com";
 
-
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
     const projectRaw = localStorage.getItem("currentProject");
 
-    // 🔍 DEBUG (keep for now)
     console.log("JWT Token:", token);
     console.log("Project Raw:", projectRaw);
 
     if (!token) {
-        alert("Session expired. Please login again.");
+        alert("Please login again.");
         redirectToLogin();
         return;
     }
@@ -36,28 +34,32 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // ✅ Set project name dynamically
     document.getElementById("projectName").textContent = project.name;
 
-    // ✅ Load messages
     loadChatHistory(project.id);
 });
 
-
+/* ===========================
+   LOAD CHAT HISTORY
+=========================== */
 async function loadChatHistory(projectId) {
     const chatBody = document.getElementById("chatBody");
     chatBody.innerHTML = "";
 
     try {
-        const res = await fetch(`${API_BASE}/chat/${projectId}/history`, {
-            headers: {
-                "Authorization": "Bearer " + localStorage.getItem("token")
+        const res = await fetch(
+            `${API_BASE}/api/chat/${projectId}/history`, // ✅ FIX
+            {
+                headers: {
+                    "Authorization": "Bearer " + localStorage.getItem("token"),
+                    "Content-Type": "application/json"
+                }
             }
-        });
+        );
 
-        if (res.status === 401 || res.status === 403) {
-            alert("Unauthorized. Please login again.");
-            redirectToLogin();
+        if (!res.ok) {
+            console.error("Chat history load failed:", res.status);
+            renderMessage("assistant", "⚠️ Unable to load chat history.");
             return;
         }
 
@@ -75,70 +77,12 @@ async function loadChatHistory(projectId) {
     }
 }
 
-
+/* ===========================
+   SEND MESSAGE
+=========================== */
 async function sendMessage() {
     const input = document.getElementById("messageInput");
     const text = input.value.trim();
     if (!text) return;
 
-    const project = JSON.parse(localStorage.getItem("currentProject"));
-
-    renderMessage("user", text);
-    input.value = "";
-
-    try {
-        const res = await fetch(`${API_BASE}/chat/${project.id}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + localStorage.getItem("token")
-            },
-            body: JSON.stringify({ message: text })
-        });
-
-        if (res.status === 401 || res.status === 403) {
-            alert("Session expired.");
-            redirectToLogin();
-            return;
-        }
-
-        const data = await res.json();
-        renderMessage("assistant", data.response);
-
-    } catch (err) {
-        console.error("Chat error:", err);
-        renderMessage("assistant", "⚠️ AI service unavailable.");
-    }
-}
-
-
-function renderMessage(role, text) {
-    const chatBody = document.getElementById("chatBody");
-
-    const div = document.createElement("div");
-    div.className = role === "user" ? "message user" : "message bot";
-    div.textContent = text;
-
-    chatBody.appendChild(div);
-    chatBody.scrollTop = chatBody.scrollHeight;
-}
-
-function logout() {
-    localStorage.clear();
-    redirectToLogin();
-}
-
-function redirectToLogin() {
-    window.location.href = "login.html";
-}
-
-function redirectToDashboard() {
-    window.location.href = "dashboard.html";
-}
-
-
-document.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        sendMessage();
-    }
-});
+    const project = JSON.parse(localStorage.getItem("cur
