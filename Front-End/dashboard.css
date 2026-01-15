@@ -68,7 +68,7 @@ label {
     margin-bottom: 16px;
 }
 
-#system-prompt {
+#systemPrompt {
     resize: none;
     height: 80px;
 }

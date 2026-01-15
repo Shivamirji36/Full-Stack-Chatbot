@@ -20,10 +20,10 @@
             <h3>Create New Project</h3>
 
             <label>Project Name</label>
-            <input class="text-boxes" type="text" placeholder="Project Name" />
+            <input id="projectName" class="text-boxes" type="text" placeholder="Project Name" />
 
             <label>System Prompt</label>
-            <textarea id="system-prompt" placeholder="System Prompt (e.g. You are a helpful assistant)"></textarea>
+            <textarea id="systemPrompt" placeholder="System Prompt (e.g. You are a helpful assistant)"></textarea>
 
             <button id="createProjectBtn">Create Project</button>
         </section>
@@ -31,23 +31,14 @@
         <section class="card">
             <h3>Your Projects</h3>
 
-            <div class="project-item">
-                <span>Customer Support Bot</span>
-                <span class="arrow">›</span>
-            </div>
-
-            <div class="project-item">
-                <span>Weather Information Bot</span>
-                <span class="arrow">›</span>
-            </div>
-
-            <div class="project-item">
-                <span>Legal Counsel Bot</span>
-                <span class="arrow">›</span>
-            </div>
+            <section class="card">
+                <h3>Your Projects</h3>
+                <div id="projectsList"></div>
+            </section>
         </section>
 
     </div>
+    <script src="dashboard.js"></script>
 </body>
 
 </html>

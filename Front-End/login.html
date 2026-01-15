@@ -11,12 +11,12 @@
 </head>
 
 <body>
-    <form class="login-box">
+    <form id="loginForm" class="loginForm">
         <h1>Login</h1>
         <label>Email</label>
-        <input type="text" placeholder="Enter your email">
+        <input id="email" type="text" placeholder="Enter your email">
         <label>Password</label>
-        <input type="text" placeholder="Enter your Password">
+        <input type="password" id="password" placeholder="Enter password" required />
         <button class="login-btn">Login</button>
         <label class="invalid-text">--</label>
         <div class="line-separator"></div>
@@ -25,6 +25,7 @@
             <a href="signup.html"><span class="register-text">Register here</span></a>
         </p>
     </form>
+    <script src="login.js"></script>
 </body>
 
 </html>
