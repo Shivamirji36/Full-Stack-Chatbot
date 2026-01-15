@@ -3,9 +3,9 @@ package com.chatbot.controller;
 import com.chatbot.dto.AuthDTOs.*;
 import com.chatbot.service.AuthService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,39 +13,30 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
 
-    public AuthService getAuthService() {
-        return authService;
-    }
-
-    public void setAuthService(AuthService authService) {
+    // ✅ Constructor injection (recommended)
+    public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+
+        System.out.println("🔥 REGISTER endpoint HIT");
+
         try {
             AuthResponse response = authService.register(request);
+
+            System.out.println("🔥 REGISTER endpoint COMPLETED");
+
             return ResponseEntity.ok(response);
+
         } catch (RuntimeException e) {
             Map<String, String> error = new HashMap<>();
             error.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-
-        System.out.println("🔥 REGISTER endpoint HIT");
-
-        AuthResponse response = authService.register(request);
-
-        System.out.println("🔥 REGISTER endpoint COMPLETED");
-
-        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
