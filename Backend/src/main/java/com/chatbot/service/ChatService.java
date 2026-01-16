@@ -108,9 +108,7 @@ public class ChatService {
         return messages;
     }
 
-    /* ===========================
-       GROQ API CALL
-    ============================ */
+
     @SuppressWarnings("unchecked")
     private String callGroq(List<Map<String, String>> messages) {
 
@@ -126,36 +124,45 @@ public class ChatService {
                     .uri("/chat/completions")
                     .bodyValue(body)
                     .retrieve()
+                    .onStatus(
+                            status -> status.is4xxClientError() || status.is5xxServerError(),
+                            clientResponse -> clientResponse.bodyToMono(String.class)
+                                    .map(errorBody -> {
+                                        System.err.println("🔥 GROQ ERROR RESPONSE:");
+                                        System.err.println(errorBody);
+                                        return new RuntimeException(errorBody);
+                                    })
+                    )
                     .bodyToMono(Map.class)
-                    .timeout(Duration.ofSeconds(30))
-                    .retryWhen(Retry.backoff(1, Duration.ofSeconds(2)))
                     .block();
 
-            if (response == null || !response.containsKey("choices")) {
-                return "⚠️ AI returned an empty response.";
+            // 🔍 Handle Groq error JSON
+            if (response.containsKey("error")) {
+                Map<String, Object> error =
+                        (Map<String, Object>) response.get("error");
+
+                return "⚠️ Groq error: " + error.get("message");
             }
 
             List<Map<String, Object>> choices =
                     (List<Map<String, Object>>) response.get("choices");
 
             if (choices == null || choices.isEmpty()) {
-                return "⚠️ AI returned no response.";
+                return "⚠️ Groq returned no choices.";
             }
 
             Map<String, Object> message =
                     (Map<String, Object>) choices.get(0).get("message");
 
-            if (message == null || !message.containsKey("content")) {
-                return "⚠️ AI response malformed.";
-            }
-
             return message.get("content").toString().trim();
 
         } catch (Exception e) {
+            System.err.println("🔥 GROQ CALL FAILED");
             e.printStackTrace();
             return "⚠️ AI service unavailable. Please try again.";
         }
     }
+
 
     /* ===========================
        HISTORY
