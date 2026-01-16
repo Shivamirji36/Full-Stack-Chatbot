@@ -38,30 +38,31 @@ https://full-stack-chatbot-3.onrender.com
 
 ## Tech Stack
 
-## Frontend
+**Frontend**</br>
+</br>
+HTML5</br>
+CSS3</br>
+Vanilla JavaScript</br>
+Hosted on Vercel</br>
+</br>
 
-HTML5
-CSS3
-Vanilla JavaScript
-Hosted on Vercel
+**Backend**
+</br>
+Java 17</br>
+Spring Boot 3</br>
+Spring Security (JWT)</br>
+Spring Data MongoDB</br>
+WebClient (for AI API calls)</br>
+Hosted on Render</br>
+</br>
 
-## Backend
+**Database**</br>
+</br>
+MongoDB Atlas (Cloud)</br>
+</br>
 
-Java 17
-Spring Boot 3
-Spring Security (JWT)
-Spring Data MongoDB
-WebClient (for AI API calls)
-Hosted on Render
-
-## Database
-
-MongoDB Atlas (Cloud)
-
-## AI / LLM
-
-Groq API (OpenAI-compatible)
-
-Model: mixtral-8x7b-32768
-
-Easily replaceable with other providers (OpenAI / Hugging Face / OpenRouter)
+**AI / LLM**</br>
+</br>
+Groq API (OpenAI-compatible)</br>
+Model: mixtral-8x7b-32768</br>
+Easily replaceable with other providers (OpenAI / Hugging Face / OpenRouter)</br>
