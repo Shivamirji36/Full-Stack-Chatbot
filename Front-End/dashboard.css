@@ -30,6 +30,10 @@ body {
     cursor: pointer;
 }
 
+.logout-btn:hover {
+    background: rgb(242, 242, 242);
+}
+
 .dashboard-container {
     max-width: 1200px;
     margin: 30px auto;
@@ -71,6 +75,11 @@ label {
 #systemPrompt {
     resize: none;
     height: 80px;
+    margin-bottom: 10px;
+}
+
+#systemPrompt::placeholder {
+    font-size: 13px;
 }
 
 #createProjectBtn {
@@ -88,25 +97,19 @@ label {
     opacity: 0.9;
 }
 
-
-.project-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 16px;
+#projectsContainer {
+    padding: 5px;
+    border-radius: 4px;
     border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    margin-bottom: 12px;
     cursor: pointer;
 }
 
-.project-item:hover {
-    background-color: #f7f7f7;
+#projectsContainer:hover {
+    background: rgb(242, 242, 242);
 }
 
-.arrow {
-    font-size: 18px;
-    color: #999;
+.project-name {
+    margin: 0 0 4px 0;
 }
 
 @media (max-width: 768px) {

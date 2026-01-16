@@ -11,15 +11,13 @@ document.addEventListener("DOMContentLoaded", () => {
     loadProjects();
 });
 
-/* ===========================
-   LOAD PROJECTS
-=========================== */
+
 async function loadProjects() {
     const container = document.getElementById("projectsContainer");
     container.innerHTML = "<p>Loading projects...</p>";
 
     try {
-        const res = await fetch(`${API_BASE}/api/projects`, { // ✅ FIX
+        const res = await fetch(`${API_BASE}/api/projects`, {
             headers: {
                 "Authorization": "Bearer " + localStorage.getItem("token")
             }
@@ -43,8 +41,8 @@ async function loadProjects() {
             const card = document.createElement("div");
             card.className = "project-card";
             card.innerHTML = `
-                <h4>${project.name}</h4>
-                <p>${project.model || ""}</p>
+                <h4 class = "project-name">${project.name}</h4>
+                <p class = "project-name">${project.model || ""}</p>
             `;
 
             card.addEventListener("click", () => openProject(project));
@@ -57,9 +55,6 @@ async function loadProjects() {
     }
 }
 
-/* ===========================
-   CREATE PROJECT
-=========================== */
 async function createProject() {
     const nameInput = document.getElementById("projectName");
     const promptInput = document.getElementById("systemPrompt");
@@ -73,7 +68,7 @@ async function createProject() {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/projects`, { // ✅ FIX
+        const res = await fetch(`${API_BASE}/api/projects`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -96,17 +91,11 @@ async function createProject() {
     }
 }
 
-/* ===========================
-   OPEN PROJECT
-=========================== */
 function openProject(project) {
     localStorage.setItem("currentProject", JSON.stringify(project));
     window.location.href = "chat.html";
 }
 
-/* ===========================
-   LOGOUT
-=========================== */
 function logout() {
     localStorage.clear();
     window.location.href = "login.html";
