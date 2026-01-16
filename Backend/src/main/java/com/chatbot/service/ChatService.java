@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,34 +22,32 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final WebClient webClient;
 
-    // ✅ OPEN + UNGATED MODEL (WORKS)
-    private static final String MODEL =
-            "TinyLlama/TinyLlama-1.1B-Chat-v1.0";
+    // 🚀 Groq official model (fast + stable)
+    private static final String MODEL = "mixtral-8x7b-32768";
 
-    // ✅ Constructor injection (Render-safe)
     public ChatService(
             ProjectService projectService,
             MessageRepository messageRepository,
-            @Value("${huggingface.api.key}") String huggingFaceApiKey
+            @Value("${groq.api.key}") String groqApiKey
     ) {
         this.projectService = projectService;
         this.messageRepository = messageRepository;
 
         this.webClient = WebClient.builder()
-                .baseUrl("https://api-inference.huggingface.co")
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + huggingFaceApiKey)
+                .baseUrl("https://api.groq.com/openai/v1")
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + groqApiKey)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
 
-    // ================= SEND MESSAGE =================
-
+    /* ===========================
+       SEND MESSAGE
+    ============================ */
     public ChatResponse sendMessage(
             String projectId,
             ChatRequest request,
             String userId
     ) {
-
         Project project = projectService.getProject(projectId, userId);
 
         // Save user message
@@ -59,9 +58,10 @@ public class ChatService {
         List<Message> history =
                 messageRepository.findByProjectIdOrderByTimestampAsc(projectId);
 
-        String prompt = buildPrompt(project, history);
+        List<Map<String, String>> messages =
+                buildMessages(project, history);
 
-        String aiResponse = callHuggingFace(prompt);
+        String aiResponse = callGroq(messages);
 
         Message assistantMessage =
                 messageRepository.save(
@@ -71,90 +71,77 @@ public class ChatService {
         return new ChatResponse(aiResponse, assistantMessage.getId());
     }
 
-    // ================= PROMPT BUILDER =================
-
-    private String buildPrompt(Project project, List<Message> history) {
-
-        StringBuilder prompt = new StringBuilder();
+    /* ===========================
+       MESSAGE BUILDER
+    ============================ */
+    private List<Map<String, String>> buildMessages(
+            Project project,
+            List<Message> history
+    ) {
+        List<Map<String, String>> messages = new ArrayList<>();
 
         if (project.getSystemPrompt() != null &&
                 !project.getSystemPrompt().isBlank()) {
-            prompt.append("System: ")
-                    .append(project.getSystemPrompt())
-                    .append("\n\n");
+            messages.add(Map.of(
+                    "role", "system",
+                    "content", project.getSystemPrompt()
+            ));
         }
 
-        int start = Math.max(0, history.size() - 6);
+        int start = Math.max(0, history.size() - 10);
         for (int i = start; i < history.size(); i++) {
             Message msg = history.get(i);
-            prompt.append(capitalize(msg.getRole()))
-                    .append(": ")
-                    .append(msg.getContent())
-                    .append("\n");
+            messages.add(Map.of(
+                    "role", msg.getRole(),
+                    "content", msg.getContent()
+            ));
         }
 
-        prompt.append("Assistant:");
-        return prompt.toString();
+        return messages;
     }
 
-    private String capitalize(String role) {
-        if (role == null || role.isEmpty()) return role;
-        return role.substring(0, 1).toUpperCase() + role.substring(1);
-    }
-
-    // ================= HF API CALL =================
-
+    /* ===========================
+       GROQ API CALL
+    ============================ */
     @SuppressWarnings("unchecked")
-    private String callHuggingFace(String prompt) {
+    private String callGroq(List<Map<String, String>> messages) {
 
         try {
-            Map<String, Object> requestBody = Map.of(
-                    "inputs", prompt,
-                    "parameters", Map.of(
-                            "max_new_tokens", 256,
-                            "temperature", 0.7,
-                            "top_p", 0.9,
-                            "return_full_text", false
-                    )
+            Map<String, Object> body = Map.of(
+                    "model", MODEL,
+                    "messages", messages,
+                    "temperature", 0.7,
+                    "max_tokens", 512
             );
 
-            Object rawResponse = webClient.post()
-                    .uri("/models/" + MODEL)
-                    .bodyValue(requestBody)
+            Map<String, Object> response = webClient.post()
+                    .uri("/chat/completions")
+                    .bodyValue(body)
                     .retrieve()
-                    .bodyToMono(Object.class)
+                    .bodyToMono(Map.class)
                     .block();
 
-            // 🔥 Model warming up / HF error
-            if (rawResponse instanceof Map<?, ?> map &&
-                    map.containsKey("error")) {
-                return "⚠️ AI model is warming up. Please try again in a moment.";
+            List<Map<String, Object>> choices =
+                    (List<Map<String, Object>>) response.get("choices");
+
+            if (choices == null || choices.isEmpty()) {
+                return "⚠️ AI returned no response.";
             }
 
-            // Expected HF response:
-            // [ { "generated_text": "..." } ]
-            List<Map<String, Object>> result =
-                    (List<Map<String, Object>>) rawResponse;
+            Map<String, Object> message =
+                    (Map<String, Object>) choices.get(0).get("message");
 
-            if (result == null || result.isEmpty()) {
-                return "⚠️ AI response unavailable.";
-            }
-
-            Object text = result.get(0).get("generated_text");
-            if (text == null) {
-                return "⚠️ AI response unavailable.";
-            }
-
-            return text.toString().trim();
+            return message.get("content").toString().trim();
 
         } catch (Exception e) {
             e.printStackTrace();
-            return "⚠️ Hugging Face AI service unavailable. Please try again.";
+            return "⚠️ AI service unavailable. Please try again.";
         }
     }
 
-    // ================= HISTORY =================
-
+    /* ===========================
+       HISTORY
+    ============================ */
     public List<Message> getChatHistory(String projectId, String userId) {
         projectService.getProject(projectId, userId);
         return messageRepository.findByProjectIdOrderByTimestampAsc(projectId);
