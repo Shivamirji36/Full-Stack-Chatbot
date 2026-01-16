@@ -11,7 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class ChatService {
@@ -20,7 +21,11 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final WebClient webClient;
 
-    // ✅ Constructor injection (correct + safe)
+    // 🔥 HF model (stable & good)
+    private static final String MODEL =
+            "mistralai/Mistral-7B-Instruct-v0.3";
+
+    // ✅ Constructor injection (Render-safe)
     public ChatService(
             ProjectService projectService,
             MessageRepository messageRepository,
@@ -36,8 +41,13 @@ public class ChatService {
                 .build();
     }
 
+    // ================= SEND MESSAGE =================
 
-    public ChatResponse sendMessage(String projectId, ChatRequest request, String userId) {
+    public ChatResponse sendMessage(
+            String projectId,
+            ChatRequest request,
+            String userId
+    ) {
 
         Project project = projectService.getProject(projectId, userId);
 
@@ -49,23 +59,26 @@ public class ChatService {
         List<Message> history =
                 messageRepository.findByProjectIdOrderByTimestampAsc(projectId);
 
-        // Build prompt (HF models are prompt-based)
         String prompt = buildPrompt(project, history);
 
         String aiResponse = callHuggingFace(prompt);
 
         Message assistantMessage =
-                messageRepository.save(new Message(projectId, "assistant", aiResponse));
+                messageRepository.save(
+                        new Message(projectId, "assistant", aiResponse)
+                );
 
         return new ChatResponse(aiResponse, assistantMessage.getId());
     }
 
+    // ================= PROMPT BUILDER =================
 
     private String buildPrompt(Project project, List<Message> history) {
 
         StringBuilder prompt = new StringBuilder();
 
-        if (project.getSystemPrompt() != null && !project.getSystemPrompt().isBlank()) {
+        if (project.getSystemPrompt() != null &&
+                !project.getSystemPrompt().isBlank()) {
             prompt.append("System: ")
                     .append(project.getSystemPrompt())
                     .append("\n\n");
@@ -74,16 +87,24 @@ public class ChatService {
         int start = Math.max(0, history.size() - 6);
         for (int i = start; i < history.size(); i++) {
             Message msg = history.get(i);
-            prompt.append(msg.getRole())
+            prompt.append(capitalize(msg.getRole()))
                     .append(": ")
                     .append(msg.getContent())
                     .append("\n");
         }
 
-        prompt.append("assistant:");
+        prompt.append("Assistant:");
         return prompt.toString();
     }
 
+    private String capitalize(String role) {
+        if (role == null || role.isEmpty()) return role;
+        return role.substring(0, 1).toUpperCase() + role.substring(1);
+    }
+
+    // ================= HF API CALL =================
+
+    @SuppressWarnings("unchecked")
     private String callHuggingFace(String prompt) {
 
         try {
@@ -96,17 +117,30 @@ public class ChatService {
                     )
             );
 
-            Object response = webClient.post()
-                    // ✅ MISTRAL v0.3
-                    .uri("/models/mistralai/Mistral-7B-Instruct-v0.3")
+            Object rawResponse = webClient.post()
+                    .uri("/models/" + MODEL)
                     .bodyValue(requestBody)
                     .retrieve()
                     .bodyToMono(Object.class)
                     .block();
 
-            // HF returns: [ { "generated_text": "..." } ]
+            // 🔥 HF cold-start or error payload
+            if (rawResponse instanceof Map) {
+                Map<String, Object> error =
+                        (Map<String, Object>) rawResponse;
+
+                if (error.containsKey("error")) {
+                    return "⚠️ AI model is warming up. Please try again in a few seconds.";
+                }
+            }
+
             List<Map<String, Object>> result =
-                    (List<Map<String, Object>>) response;
+                    (List<Map<String, Object>>) rawResponse;
+
+            if (result.isEmpty() ||
+                    !result.get(0).containsKey("generated_text")) {
+                return "⚠️ AI response unavailable.";
+            }
 
             return result.get(0)
                     .get("generated_text")
@@ -119,6 +153,7 @@ public class ChatService {
         }
     }
 
+    // ================= HISTORY =================
 
     public List<Message> getChatHistory(String projectId, String userId) {
         projectService.getProject(projectId, userId);

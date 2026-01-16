@@ -13,52 +13,60 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthenticationFilter,
-            CorsConfigurationSource corsConfigurationSource
-    ) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                // 🔥 Explicitly wire CORS source (THIS IS THE FIX)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                // ✅ Use CorsConfig automatically
+                .cors(cors -> {})
 
-                // Disable CSRF (JWT-based auth)
+                // ✅ Stateless JWT → disable CSRF
                 .csrf(csrf -> csrf.disable())
 
-                // Stateless session
+                // ✅ No sessions
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // Authorization rules
+                // ✅ Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        // Allow preflight
+
+                        // Preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Public auth endpoints
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // Public endpoints
+                        .requestMatchers(
+                                "/",
+                                "/error",
+                                "/health",
+                                "/actuator/**",
+                                "/api/auth/**"
+                        ).permitAll()
 
-                        // Everything else secured
+                        // Everything else needs JWT
                         .anyRequest().authenticated()
-                );
+                )
 
-        // JWT filter
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // ❌ Disable defaults
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(form -> form.disable());
+
+        // ✅ JWT filter
+        http.addFilterBefore(
+                jwtAuthenticationFilter,
+                UsernamePasswordAuthenticationFilter.class
+        );
 
         return http.build();
     }
