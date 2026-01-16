@@ -26,27 +26,25 @@ https://full-stack-chatbot-3.onrender.com
 ![Chat Interface](images/chat-interface.png)
 
 ## Features
-
-✅ JWT-based authentication (Register / Login)
-✅ AI-powered chat per project
-✅ Persistent chat history (MongoDB)
-✅ Clean REST API design
-✅ Chat History Management
-✅ Secure API Endpoints
-✅ CORS Configuration
-✅ Pluggable LLM provider (extensible architecture)
+</br>
+✅ JWT-based authentication (Register / Login)</br>
+✅ AI-powered chat per project</br>
+✅ Persistent chat history (MongoDB)</br>
+✅ Clean REST API design</br>
+✅ Chat History Management</br>
+✅ Secure API Endpoints</br>
+✅ CORS Configuration</br>
+✅ Pluggable LLM provider (extensible architecture)</br>
 
 ## 🛠 Tech Stack
 
 **Frontend**</br>
-</br>
 HTML5</br>
 CSS3</br>
 Vanilla JavaScript</br>
 Hosted on Vercel</br>
 
-**Backend**
-</br>
+**Backend**</br>
 Java 17</br>
 Spring Boot 3</br>
 Spring Security (JWT)</br>
@@ -55,11 +53,9 @@ WebClient (for AI API calls)</br>
 Hosted on Render</br>
 
 **Database**</br>
-</br>
 MongoDB Atlas (Cloud)</br>
 
 **AI / LLM**</br>
-</br>
 Groq API (OpenAI-compatible)</br>
 Model: mixtral-8x7b-32768</br>
 Easily replaceable with other providers (OpenAI / Hugging Face / OpenRouter)</br>
@@ -193,7 +189,6 @@ CHATBOT-ASSESS
 ```
 
 ## 🧪 Error Handling & Security
-</br>
 Graceful AI API failures</br>
 JWT expiration handling</br>
 Unauthorized access redirects</br>
@@ -201,10 +196,14 @@ Centralized exception handling</br>
 Secure password hashing (BCrypt)</br>
 
 ## 📌 Future Improvements
-</br>
 Streaming AI responses</br>
 Role-based access control</br>
 File upload support</br>
 Chat export</br>
 WebSocket support</br>
 Rate limiting</br>
+
+## 👨‍💻 Author
+
+**Shivanand Mirji**
+GitHub: https://github.com/Shivamirji36
