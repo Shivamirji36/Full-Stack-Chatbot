@@ -21,9 +21,9 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final WebClient webClient;
 
-    // 🔥 HF model (stable & good)
+    // ✅ OPEN + UNGATED MODEL (WORKS)
     private static final String MODEL =
-            "mistralai/Mistral-7B-Instruct-v0.3";
+            "TinyLlama/TinyLlama-1.1B-Chat-v1.0";
 
     // ✅ Constructor injection (Render-safe)
     public ChatService(
@@ -111,8 +111,9 @@ public class ChatService {
             Map<String, Object> requestBody = Map.of(
                     "inputs", prompt,
                     "parameters", Map.of(
-                            "max_new_tokens", 300,
+                            "max_new_tokens", 256,
                             "temperature", 0.7,
+                            "top_p", 0.9,
                             "return_full_text", false
                     )
             );
@@ -124,28 +125,27 @@ public class ChatService {
                     .bodyToMono(Object.class)
                     .block();
 
-            // 🔥 HF cold-start or error payload
-            if (rawResponse instanceof Map) {
-                Map<String, Object> error =
-                        (Map<String, Object>) rawResponse;
-
-                if (error.containsKey("error")) {
-                    return "⚠️ AI model is warming up. Please try again in a few seconds.";
-                }
+            // 🔥 Model warming up / HF error
+            if (rawResponse instanceof Map<?, ?> map &&
+                    map.containsKey("error")) {
+                return "⚠️ AI model is warming up. Please try again in a moment.";
             }
 
+            // Expected HF response:
+            // [ { "generated_text": "..." } ]
             List<Map<String, Object>> result =
                     (List<Map<String, Object>>) rawResponse;
 
-            if (result.isEmpty() ||
-                    !result.get(0).containsKey("generated_text")) {
+            if (result == null || result.isEmpty()) {
                 return "⚠️ AI response unavailable.";
             }
 
-            return result.get(0)
-                    .get("generated_text")
-                    .toString()
-                    .trim();
+            Object text = result.get(0).get("generated_text");
+            if (text == null) {
+                return "⚠️ AI response unavailable.";
+            }
+
+            return text.toString().trim();
 
         } catch (Exception e) {
             e.printStackTrace();
