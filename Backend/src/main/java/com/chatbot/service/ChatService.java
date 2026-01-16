@@ -10,9 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.util.retry.Retry;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,14 +22,15 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final WebClient webClient;
 
-    // 🚀 Groq official fast model
-    private static final String MODEL = "mixtral-8x7b-32768";
+    // ✅ Stable + free Groq model
+    private static final String MODEL = "llama3-8b-8192";
 
     public ChatService(
             ProjectService projectService,
             MessageRepository messageRepository,
-            @Value("${groq.api.key:}") String groqApiKey
+            @Value("${GROQ_API_KEY:}") String groqApiKey
     ) {
+
         if (groqApiKey == null || groqApiKey.isBlank()) {
             throw new IllegalStateException(
                     "❌ GROQ_API_KEY is not set in Render environment variables"
@@ -56,6 +55,7 @@ public class ChatService {
             ChatRequest request,
             String userId
     ) {
+
         Project project = projectService.getProject(projectId, userId);
 
         // Save user message
@@ -86,6 +86,7 @@ public class ChatService {
             Project project,
             List<Message> history
     ) {
+
         List<Map<String, String>> messages = new ArrayList<>();
 
         if (project.getSystemPrompt() != null &&
@@ -108,7 +109,9 @@ public class ChatService {
         return messages;
     }
 
-
+    /* ===========================
+       GROQ API CALL
+    ============================ */
     @SuppressWarnings("unchecked")
     private String callGroq(List<Map<String, String>> messages) {
 
@@ -124,19 +127,14 @@ public class ChatService {
                     .uri("/chat/completions")
                     .bodyValue(body)
                     .retrieve()
-                    .onStatus(
-                            status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                    .map(errorBody -> {
-                                        System.err.println("🔥 GROQ ERROR RESPONSE:");
-                                        System.err.println(errorBody);
-                                        return new RuntimeException(errorBody);
-                                    })
-                    )
                     .bodyToMono(Map.class)
                     .block();
 
-            // 🔍 Handle Groq error JSON
+            if (response == null) {
+                return "⚠️ Groq returned an empty response.";
+            }
+
+            // Handle Groq error payload
             if (response.containsKey("error")) {
                 Map<String, Object> error =
                         (Map<String, Object>) response.get("error");
@@ -162,7 +160,6 @@ public class ChatService {
             return "⚠️ AI service unavailable. Please try again.";
         }
     }
-
 
     /* ===========================
        HISTORY
