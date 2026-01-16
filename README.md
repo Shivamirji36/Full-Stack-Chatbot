@@ -38,13 +38,13 @@ https://full-stack-chatbot-3.onrender.com
 
 ## 🛠 Tech Stack
 
-**Frontend**</br>
+✅**Frontend**</br>
 HTML5</br>
 CSS3</br>
 Vanilla JavaScript</br>
 Hosted on Vercel</br>
 
-**Backend**</br>
+✅**Backend**</br>
 Java 17</br>
 Spring Boot 3</br>
 Spring Security (JWT)</br>
@@ -52,10 +52,10 @@ Spring Data MongoDB</br>
 WebClient (for AI API calls)</br>
 Hosted on Render</br>
 
-**Database**</br>
+✅**Database**</br>
 MongoDB Atlas (Cloud)</br>
 
-**AI / LLM**</br>
+✅**AI / LLM**</br>
 Groq API (OpenAI-compatible)</br>
 Model: mixtral-8x7b-32768</br>
 Easily replaceable with other providers (OpenAI / Hugging Face / OpenRouter)</br>
@@ -205,5 +205,5 @@ Rate limiting</br>
 
 ## 👨‍💻 Author
 
-**Shivanand Mirji**
+**Shivanand Mirji**</br>
 GitHub: https://github.com/Shivamirji36
