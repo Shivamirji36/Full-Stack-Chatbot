@@ -10,7 +10,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,14 +24,20 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final WebClient webClient;
 
-    // 🚀 Groq official model (fast + stable)
+    // 🚀 Groq official fast model
     private static final String MODEL = "mixtral-8x7b-32768";
 
     public ChatService(
             ProjectService projectService,
             MessageRepository messageRepository,
-            @Value("${groq.api.key}") String groqApiKey
+            @Value("${groq.api.key:}") String groqApiKey
     ) {
+        if (groqApiKey == null || groqApiKey.isBlank()) {
+            throw new IllegalStateException(
+                    "❌ GROQ_API_KEY is not set in Render environment variables"
+            );
+        }
+
         this.projectService = projectService;
         this.messageRepository = messageRepository;
 
@@ -119,7 +127,13 @@ public class ChatService {
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(Map.class)
+                    .timeout(Duration.ofSeconds(30))
+                    .retryWhen(Retry.backoff(1, Duration.ofSeconds(2)))
                     .block();
+
+            if (response == null || !response.containsKey("choices")) {
+                return "⚠️ AI returned an empty response.";
+            }
 
             List<Map<String, Object>> choices =
                     (List<Map<String, Object>>) response.get("choices");
@@ -130,6 +144,10 @@ public class ChatService {
 
             Map<String, Object> message =
                     (Map<String, Object>) choices.get(0).get("message");
+
+            if (message == null || !message.containsKey("content")) {
+                return "⚠️ AI response malformed.";
+            }
 
             return message.get("content").toString().trim();
 
